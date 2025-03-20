@@ -6,7 +6,7 @@ pub(crate) fn sort(x: &mut List) {
     }
 }
 
-pub fn sort_by_bit(x: &mut List, bit:usize) {
+pub fn sort_by_bit(x: &mut List, bit: usize) {
     let mut v = vec![];
 
     for i in 0..(x.len()) {

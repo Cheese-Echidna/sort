@@ -1,11 +1,9 @@
-use std::fmt::format;
-use std::ops::Range;
-use std::slice::Iter;
-use nannou::Draw;
-use nannou::geom::Rect;
-use nannou::prelude::{LinSrgb, Vec2};
+use nannou::prelude::Vec2;
 use nannou::rand::seq::SliceRandom;
 use nannou::rand::thread_rng;
+use nannou::Draw;
+use std::ops::Range;
+use std::slice::Iter;
 
 #[derive(Debug, Clone)]
 pub struct List {
@@ -18,25 +16,31 @@ pub struct List {
 enum Operation {
     Get(usize),
     Set(usize, usize),
-    Swap(usize, usize)
+    Swap(usize, usize),
 }
 
-impl Operation {
-    fn is_draw(&self) -> bool {
-        match self {
-            Operation::Get(_) => {false}
-            Operation::Set(_, _) => {true}
-            Operation::Swap(_, _) => {true}
-        }
-    }
-    fn fmt(&self) -> String {
-        match self {
-            Operation::Get(i) => {format!("list[{i}]")}
-            Operation::Set(i, x) => {format!("list[{i}] = {x}")}
-            Operation::Swap(i, j) => {format!("swap({i},{j})")}
-        }
-    }
-}
+// impl Operation {
+//     fn is_draw(&self) -> bool {
+//         match self {
+//             Operation::Get(_) => false,
+//             Operation::Set(_, _) => true,
+//             Operation::Swap(_, _) => true,
+//         }
+//     }
+//     fn fmt(&self) -> String {
+//         match self {
+//             Operation::Get(i) => {
+//                 format!("list[{i}]")
+//             }
+//             Operation::Set(i, x) => {
+//                 format!("list[{i}] = {x}")
+//             }
+//             Operation::Swap(i, j) => {
+//                 format!("swap({i},{j})")
+//             }
+//         }
+//     }
+// }
 
 impl List {
     pub fn new(vec: Vec<usize>, length: usize) -> Self {
@@ -49,6 +53,7 @@ impl List {
     fn record(&mut self, operation: Operation) {
         self.record_of_operations.push(operation);
     }
+    #[allow(dead_code)]
     pub(crate) fn iter(&self) -> Iter<'_, usize> {
         self.internal_vec.iter()
     }
@@ -68,10 +73,7 @@ impl ListPart for List {
         self.internal_vec.swap(i, j);
     }
     fn slice(&mut self, range: Range<usize>) -> SliceOfList {
-        SliceOfList {
-            range,
-            list: self,
-        }
+        SliceOfList { range, list: self }
     }
     fn len(&self) -> usize {
         self.length
@@ -96,9 +98,9 @@ impl SliceOfList<'_> {
     fn record(&mut self, operation: Operation) {
         let slice_start = self.range.start;
         let operation = match operation {
-            Operation::Get(i) => {Operation::Get(i + slice_start)}
-            Operation::Set(i, x) => {Operation::Swap(i + slice_start, x)}
-            Operation::Swap(i, j) => {Operation::Swap(i + slice_start, j + slice_start)}
+            Operation::Get(i) => Operation::Get(i + slice_start),
+            Operation::Set(i, x) => Operation::Set(i + slice_start, x),
+            Operation::Swap(i, j) => Operation::Swap(i + slice_start, j + slice_start),
         };
         self.list.record(operation);
     }
@@ -127,7 +129,7 @@ impl ListPart for SliceOfList<'_> {
     }
     fn slice(&mut self, new: Range<usize>) -> SliceOfList {
         let new_start = new.start + self.range.start;
-        let new_end =   new.end + self.range.start;
+        let new_end = new.end + self.range.start;
         assert!(new_end <= self.range.end);
         SliceOfList {
             range: new_start..new_end,
@@ -144,7 +146,7 @@ pub struct SortPlayer {
     record_of_operations: Vec<Operation>,
     length: usize,
     current_play_back_point: usize,
-    playback_vec: Vec<usize>
+    playback_vec: Vec<usize>,
 }
 
 impl SortPlayer {
@@ -175,9 +177,7 @@ impl SortPlayer {
             let width = 1.0 / length;
             let offset_x = i as f32 / length;
             let (center, wh) = rect_corner_wh(Vec2::new(offset_x, 0.0), Vec2::new(width, height));
-            draw.rect().xy(center)
-                .wh(wh)
-                .hsv(height, 0.8, 0.5);
+            draw.rect().xy(center).wh(wh).hsv(height, 0.8, 0.5);
         }
     }
     pub fn increment_playback(&mut self) {
@@ -206,7 +206,10 @@ impl SortPlayer {
 }
 
 pub fn starting(length: usize) -> Vec<usize> {
-    let mut v = (0..length).into_iter().map(|x| x + 1).collect::<Vec<usize>>();
+    let mut v = (0..length)
+        .into_iter()
+        .map(|x| x + 1)
+        .collect::<Vec<usize>>();
     v.shuffle(&mut thread_rng());
     v
 }

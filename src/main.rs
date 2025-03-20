@@ -8,7 +8,6 @@ use strum_macros::EnumIter;
 mod algorithms;
 mod list;
 
-
 fn main() {
     nannou::app(model).fullscreen().update(update).run();
 }
@@ -23,14 +22,19 @@ struct Model {
 }
 
 fn model(app: &App) -> Model {
-    let window_id = app.new_window().view(view).raw_event(raw_window_event).build().unwrap();
+    let window_id = app
+        .new_window()
+        .view(view)
+        .raw_event(raw_window_event)
+        .build()
+        .unwrap();
     let window = app.window(window_id).unwrap();
 
     let egui = Egui::from_window(&window);
 
     Model {
         _window: window_id,
-        player: SortPlayer::new(8, quicksort::sort),
+        player: SortPlayer::new(2_usize.pow(8), quicksort::sort),
         egui,
         selected: Sorts::Quick,
         length_log2: 8,
@@ -49,28 +53,29 @@ fn gui(_app: &App, model: &mut Model, update: Update) {
     egui.set_elapsed_time(update.since_start);
     egui.begin_frame();
 
-
     egui::Window::new("Settings").show(egui.ctx(), |ui| {
         egui::ComboBox::from_id_source("algo_select_box")
             .selected_text(format!("{:?}", model.selected))
             .show_ui(ui, |ui| {
                 for option in Sorts::iter() {
-                    let response = ui.selectable_value(&mut model.selected, option, format!("{:?}", option));
+                    let response =
+                        ui.selectable_value(&mut model.selected, option, format!("{:?}", option));
                     if response.changed() {
-                        model.player = SortPlayer::new(2_usize.pow(model.length_log2 as u32), model.selected.func());
+                        model.player = SortPlayer::new(
+                            2_usize.pow(model.length_log2 as u32),
+                            model.selected.func(),
+                        );
                     }
                 }
             });
         ui.add(
             egui::Slider::new(&mut model.playback_rate, 100..=10000)
-                .text("Playback rate (ops/secs)")
+                .text("Playback rate (ops/secs)"),
         );
-        let res = ui.add(
-            egui::Slider::new(&mut model.length_log2, 1..=16)
-                .text("Length (log2)")
-        );
+        let res = ui.add(egui::Slider::new(&mut model.length_log2, 1..=16).text("Length (log2)"));
         if res.changed() {
-            model.player = SortPlayer::new(2_usize.pow(model.length_log2 as u32), model.selected.func());
+            model.player =
+                SortPlayer::new(2_usize.pow(model.length_log2 as u32), model.selected.func());
         }
     });
 }
@@ -85,13 +90,13 @@ enum Sorts {
 }
 
 impl Sorts {
-    fn func(&self) -> fn(&mut List){
+    fn func(&self) -> fn(&mut List) {
         match self {
-            Sorts::Quick => {quicksort::sort}
-            Sorts::Merge => {todo!()}
-            Sorts::Bubble => {bubble::sort}
-            Sorts::Selection => {selection::sort}
-            Sorts::Radix => {radix::sort}
+            Sorts::Quick => quicksort::sort,
+            Sorts::Merge => mergesort::sort,
+            Sorts::Bubble => bubble::sort,
+            Sorts::Selection => selection::sort,
+            Sorts::Radix => radix::sort,
         }
     }
 }
