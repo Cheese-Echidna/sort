@@ -10,7 +10,7 @@ pub fn sort_by_bit(x: &mut List, bit: usize) {
     let mut v1 = vec![];
     let mut v2 = vec![];
 
-    for i in 0..(x.len()) {
+    for i in 0..x.len() {
         let r = x.get(i);
         if !n_th_bit(r, bit) {
             v1.push(r)

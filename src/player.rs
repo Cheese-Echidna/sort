@@ -50,7 +50,7 @@ impl SortPlayer {
             return HashMap::new();
         }
         let mut map = HashMap::new();
-        self.record_of_operations[..self.current_play_back_point].iter().enumerate().filter(|(i, op)| {
+        self.record_of_operations[..self.current_play_back_point].iter().enumerate().filter(|(i, _op)| {
             (self.current_play_back_point - 1 - i) <= history_dist
         }).filter_map(|(i, op)| {
             match op {

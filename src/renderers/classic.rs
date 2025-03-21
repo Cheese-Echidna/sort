@@ -2,7 +2,7 @@ use nannou::Draw;
 use nannou::geom::Vec2;
 use crate::player::SortPlayer;
 
-pub fn draw_state(player: &SortPlayer, draw: &Draw) {
+pub fn draw_state(player: &SortPlayer, draw: &Draw, _aspect: f32) {
     let length = player.length as f32;
     let gets = player.most_recent_gets(25);
     for (i, x) in player.playback_vec.iter().enumerate() {

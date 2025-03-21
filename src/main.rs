@@ -129,18 +129,19 @@ enum RenderMethod {
 }
 
 impl RenderMethod {
-    fn func(&self) -> fn(player: &SortPlayer, draw: &Draw) {
+    fn func(&self) -> fn(player: &SortPlayer, draw: &Draw, aspect: f32) {
         match self {
             RenderMethod::Classic => {renderers::classic::draw_state}
-            RenderMethod::DisparityDots => {todo!()}
+            RenderMethod::DisparityDots => {renderers::disparity_dots::draw_state}
         }
     }
-    fn draw(&self, player: &SortPlayer, draw: &Draw) {
-        self.func()(player, draw);
+    fn draw(&self, player: &SortPlayer, draw: &Draw, aspect: f32) {
+        self.func()(player, draw, aspect);
     }
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
+    let aspect = app.window_rect().x.len() / app.window_rect().y.len();
     let draw = app
         .draw()
         .scale_x(app.window_rect().x.len())
@@ -149,7 +150,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     (0.0, 1.0, 0.0, 1.0);
     draw.background().color(BLACK);
-    model.renderer.draw(&model.player, &draw);
+    model.renderer.draw(&model.player, &draw, aspect);
     draw.to_frame(app, &frame).unwrap();
     model.egui.draw_to_frame(&frame).unwrap();
 }

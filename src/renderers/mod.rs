@@ -1,2 +1,2 @@
 pub mod classic;
-mod disparity_dots;
+pub(crate) mod disparity_dots;

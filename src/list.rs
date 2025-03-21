@@ -1,11 +1,5 @@
-use std::collections::HashMap;
-use nannou::prelude::Vec2;
-use nannou::rand::seq::SliceRandom;
-use nannou::rand::thread_rng;
-use nannou::Draw;
 use std::ops::Range;
 use std::slice::Iter;
-use nannou::prelude::real::Real;
 
 #[derive(Debug, Clone)]
 pub struct List {
