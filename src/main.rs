@@ -1,17 +1,17 @@
 use crate::algorithms::*;
+use crate::player::SortPlayer;
+use egui::{ComboBox, Window};
 pub use list::*;
-use egui::{Window, ComboBox};
 use nannou::prelude::*;
-use nannou_egui::{self, egui, Egui};
 use nannou_egui::egui::Slider;
+use nannou_egui::{self, egui, Egui};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use crate::player::SortPlayer;
 
 mod algorithms;
 mod list;
-mod renderers;
 mod player;
+mod renderers;
 
 fn main() {
     nannou::app(model).fullscreen().update(update).run();
@@ -24,13 +24,14 @@ struct Model {
     selected: SortMethod,
     length_log2: usize,
     playback_rate: usize,
-    renderer: RenderMethod
+    renderer: RenderMethod,
 }
 
 fn model(app: &App) -> Model {
     let window_id = app
         .new_window()
         .view(view)
+        .event(event)
         .raw_event(raw_window_event)
         .build()
         .unwrap();
@@ -44,15 +45,30 @@ fn model(app: &App) -> Model {
         egui,
         selected: SortMethod::Quick,
         length_log2: 8,
-        playback_rate: 200,
-        renderer: RenderMethod::Classic
+        playback_rate: 50,
+        renderer: RenderMethod::Classic,
+    }
+}
+
+fn event(_app: &App, model: &mut Model, event: WindowEvent) {
+    if let KeyPressed(key) = event {
+        let mut key = key as u32;
+        if key < 10 {
+            RenderMethod::iter()
+                .nth(key as usize)
+                .map(|x| model.renderer = x);
+        }
     }
 }
 
 fn update(_app: &App, model: &mut Model, update: Update) {
-    let moves = (model.playback_rate as f64 * update.since_last.as_secs_f64()).ceil() as usize;
+    let raw_updates = model.playback_rate as f64 * update.since_last.as_secs_f64();
+    let moves = (raw_updates).ceil() as usize;
     model.player.play(moves);
     gui(_app, model, update);
+    if raw_updates < 1.0 {
+        std::thread::sleep(update.since_last)
+    }
 }
 
 fn gui(_app: &App, model: &mut Model, update: Update) {
@@ -83,15 +99,11 @@ fn gui(_app: &App, model: &mut Model, update: Update) {
                 }
             });
 
-        ui.add(
-            Slider::new(&mut model.playback_rate, 100..=10000)
-                .text("Playback rate (ops/secs)"),
-        );
+        ui.add(Slider::new(&mut model.playback_rate, 1..=10000).text("Playback rate (ops/secs)"));
         let res = ui.add(Slider::new(&mut model.length_log2, 1..=16).text("Length (log2)"));
         if res.changed() {
             model.player =
                 SortPlayer::new(2_usize.pow(model.length_log2 as u32), model.selected.func());
-
         }
         if ui.button("Replay").clicked() {
             model.player.reset_play();
@@ -106,7 +118,7 @@ enum SortMethod {
     Bubble,
     Selection,
     Radix,
-    Bucket
+    Bucket,
 }
 
 impl SortMethod {
@@ -126,13 +138,17 @@ impl SortMethod {
 enum RenderMethod {
     Classic,
     DisparityDots,
+    ColourCircle,
+    ColourTowers,
 }
 
 impl RenderMethod {
     fn func(&self) -> fn(player: &SortPlayer, draw: &Draw, aspect: f32) {
         match self {
-            RenderMethod::Classic => {renderers::classic::draw_state}
-            RenderMethod::DisparityDots => {renderers::disparity_dots::draw_state}
+            RenderMethod::Classic => renderers::classic::draw_state,
+            RenderMethod::DisparityDots => renderers::disparity_dots::draw_state,
+            RenderMethod::ColourCircle => renderers::colour_circle::draw_state,
+            RenderMethod::ColourTowers => renderers::colour_towers::draw_state,
         }
     }
     fn draw(&self, player: &SortPlayer, draw: &Draw, aspect: f32) {

@@ -13,10 +13,10 @@ pub struct SortPlayer {
 }
 
 impl SortPlayer {
-    pub fn new(length: usize, func: fn(&mut List)) -> Self {
+    pub fn new(length: usize, sort: fn(&mut List)) -> Self {
         let input = starting(length);
         let mut list = List::new(input.clone(), length);
-        func(&mut list);
+        sort(&mut list);
 
         Self {
             starting_vec: input.clone(),

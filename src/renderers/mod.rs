@@ -1,2 +1,4 @@
 pub mod classic;
-pub(crate) mod disparity_dots;
+pub mod disparity_dots;
+pub mod colour_circle;
+pub mod colour_towers;
