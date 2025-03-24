@@ -1,3 +1,4 @@
+use std::time::Instant;
 use crate::algorithms::*;
 use crate::player::SortPlayer;
 use egui::{ComboBox, Window};
@@ -23,8 +24,8 @@ struct Model {
     egui: Egui,
     selected: SortMethod,
     length_log2: usize,
-    playback_rate: usize,
     renderer: RenderMethod,
+    last_play: Instant
 }
 
 fn model(app: &App) -> Model {
@@ -41,18 +42,18 @@ fn model(app: &App) -> Model {
 
     Model {
         _window: window_id,
-        player: SortPlayer::new(2_usize.pow(8), quicksort::sort),
+        player: SortPlayer::new(2_usize.pow(8), quicksort::sort, 50),
         egui,
         selected: SortMethod::Quick,
         length_log2: 8,
-        playback_rate: 50,
         renderer: RenderMethod::Classic,
+        last_play: Instant::now(),
     }
 }
 
 fn event(_app: &App, model: &mut Model, event: WindowEvent) {
     if let KeyPressed(key) = event {
-        let mut key = key as u32;
+        let key = key as u32;
         if key < 10 {
             RenderMethod::iter()
                 .nth(key as usize)
@@ -62,13 +63,21 @@ fn event(_app: &App, model: &mut Model, event: WindowEvent) {
 }
 
 fn update(_app: &App, model: &mut Model, update: Update) {
-    let raw_updates = model.playback_rate as f64 * update.since_last.as_secs_f64();
-    let moves = (raw_updates).ceil() as usize;
-    model.player.play(moves);
     gui(_app, model, update);
-    if raw_updates < 1.0 {
-        std::thread::sleep(update.since_last)
+
+    let since_last = model.last_play.elapsed();
+    if since_last.as_secs_f64() < 1.0 / model.player.playback_rate as f64 {
+        println!("Since last play = {:?}", since_last);
+        return
+    } else {
+        println!("Played");
     }
+
+    let raw_updates = model.player.playback_rate as f64 * update.since_last.as_secs_f64();
+    let moves = (raw_updates).ceil() as usize;
+
+    model.player.play(moves);
+    model.last_play = Instant::now();
 }
 
 fn gui(_app: &App, model: &mut Model, update: Update) {
@@ -94,16 +103,17 @@ fn gui(_app: &App, model: &mut Model, update: Update) {
                         model.player = SortPlayer::new(
                             2_usize.pow(model.length_log2 as u32),
                             model.selected.func(),
+                            model.player.playback_rate
                         );
                     }
                 }
             });
 
-        ui.add(Slider::new(&mut model.playback_rate, 1..=10000).text("Playback rate (ops/secs)"));
+        ui.add(Slider::new(&mut model.player.playback_rate, 1..=10000).text("Playback rate (ops/secs)"));
         let res = ui.add(Slider::new(&mut model.length_log2, 1..=16).text("Length (log2)"));
         if res.changed() {
             model.player =
-                SortPlayer::new(2_usize.pow(model.length_log2 as u32), model.selected.func());
+                SortPlayer::new(2_usize.pow(model.length_log2 as u32), model.selected.func(), model.player.playback_rate);
         }
         if ui.button("Replay").clicked() {
             model.player.reset_play();
@@ -175,3 +185,4 @@ fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event:
     // Let egui handle things like keyboard and mouse input.
     model.egui.handle_raw_event(event);
 }
+

@@ -10,10 +10,11 @@ pub struct SortPlayer {
     pub(crate) length: usize,
     current_play_back_point: usize,
     pub(crate) playback_vec: Vec<usize>,
+    pub(crate) playback_rate: usize,
 }
 
 impl SortPlayer {
-    pub fn new(length: usize, sort: fn(&mut List)) -> Self {
+    pub fn new(length: usize, sort: fn(&mut List), speed: usize) -> Self {
         let input = starting(length);
         let mut list = List::new(input.clone(), length);
         sort(&mut list);
@@ -24,6 +25,7 @@ impl SortPlayer {
             length: list.length,
             playback_vec: input.clone(),
             current_play_back_point: 0,
+            playback_rate: speed,
         }
     }
     fn playback_complete(&self) -> bool {
@@ -45,22 +47,37 @@ impl SortPlayer {
             }
         }
     }
-    pub(crate) fn most_recent_gets(&self, history_dist: usize) -> HashMap<usize, f32> {
+    pub(crate) fn most_recent_gets(&self) -> HashMap<usize, f32> {
+        let history_dist = (self.length / 10).max(1);
         if self.playback_complete() {
             return HashMap::new();
         }
         let mut map = HashMap::new();
-        self.record_of_operations[..self.current_play_back_point].iter().enumerate().filter(|(i, _op)| {
-            (self.current_play_back_point - 1 - i) <= history_dist
-        }).filter_map(|(i, op)| {
-            match op {
-                Operation::Get(x) => {Some((*x, 1.0 - (self.current_play_back_point - i) as f32 / history_dist as f32))}
-                Operation::Set(_, _) => {None}
-                Operation::Swap(_, _) => {None}
-            }
-        }).for_each(|(i, t)| {
-            map.entry(i).and_modify(|x: &mut f32| *x = x.min(t)).or_insert(t);
-        });
+        for j in 0..history_dist {
+            let i = self.current_play_back_point - j - 1;
+            let prop = if history_dist == 1 {
+                1.0
+            } else {
+                1.0 - (j as f32 / (history_dist - 1) as f32)
+            };
+            // let prop = 1.0 - prop;
+            map.entry(i).and_modify(|x: &mut f32| *x = x.max(prop)).or_insert(prop);
+        }
+        // .enumerate()
+        //
+        //     .filter(|(i, _op)| {
+        //     *i < history_dist
+        // }).filter_map(|(i, op)| {
+        //     match op {
+        //         Operation::Get(_x) => { Some(i) }
+        //         Operation::Set(_, _) => { None }
+        //         Operation::Swap(_, _) => { None }
+        //     }
+        // }).map(|i| {
+        //     (i, 1.0 - (i as f32 / history_dist as f32))
+        // }).for_each(|i| {
+        //     map.entry(i).and_modify(|x: &mut f32| *x = x.max(t)).or_insert(t);
+        // });
         map
     }
     fn apply_op(&mut self, op: Operation) {
@@ -73,6 +90,11 @@ impl SortPlayer {
                 self.playback_vec.swap(a, b);
             }
         }
+    }
+    pub(crate) fn sv(&self, q: f32) -> (f32, f32) {
+        let v = 0.5 + 0.5 * q;
+        let s = 0.8 - 0.2 * q;
+        (s, v)
     }
 }
 
