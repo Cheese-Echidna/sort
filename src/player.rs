@@ -6,7 +6,7 @@ use crate::List;
 
 pub struct SortPlayer {
     starting_vec: Vec<usize>,
-    record_of_operations: Vec<Operation>,
+    pub(crate) record_of_operations: Vec<Operation>,
     pub(crate) length: usize,
     current_play_back_point: usize,
     pub(crate) playback_vec: Vec<usize>,
@@ -22,7 +22,7 @@ impl SortPlayer {
         Self {
             starting_vec: input.clone(),
             record_of_operations: list.record_of_operations,
-            length: list.length,
+            length,
             playback_vec: input.clone(),
             current_play_back_point: 0,
             playback_rate: speed,
@@ -47,10 +47,10 @@ impl SortPlayer {
             }
         }
     }
-    pub(crate) fn most_recent_gets(&self) -> HashMap<usize, f32> {
-        let history_dist = (self.length / 10).max(1);
-        if self.playback_complete() {
-            return HashMap::new();
+    pub(crate) fn most_recent_gets(&self) -> Option<HashMap<usize, f32>> {
+        let history_dist = (self.length / 20).max(1).min(self.current_play_back_point);
+        if self.playback_complete() || self.current_play_back_point == 0 {
+            return None;
         }
         let mut map = HashMap::new();
         for j in 0..history_dist {
@@ -60,25 +60,11 @@ impl SortPlayer {
             } else {
                 1.0 - (j as f32 / (history_dist - 1) as f32)
             };
-            // let prop = 1.0 - prop;
-            map.entry(i).and_modify(|x: &mut f32| *x = x.max(prop)).or_insert(prop);
+            if let Operation::Get(a) = self.record_of_operations[i] {
+                map.entry(a).and_modify(|x: &mut f32| *x = x.max(prop)).or_insert(prop);
+            }
         }
-        // .enumerate()
-        //
-        //     .filter(|(i, _op)| {
-        //     *i < history_dist
-        // }).filter_map(|(i, op)| {
-        //     match op {
-        //         Operation::Get(_x) => { Some(i) }
-        //         Operation::Set(_, _) => { None }
-        //         Operation::Swap(_, _) => { None }
-        //     }
-        // }).map(|i| {
-        //     (i, 1.0 - (i as f32 / history_dist as f32))
-        // }).for_each(|i| {
-        //     map.entry(i).and_modify(|x: &mut f32| *x = x.max(t)).or_insert(t);
-        // });
-        map
+        Some(map)
     }
     fn apply_op(&mut self, op: Operation) {
         match op {

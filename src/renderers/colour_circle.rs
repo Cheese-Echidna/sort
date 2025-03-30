@@ -16,7 +16,7 @@ pub fn draw_state(player: &SortPlayer, draw: &Draw, aspect: f32) {
         let pos = Vec2::new(i_prop.cos() / aspect, i_prop.sin()) * 0.9;
         let pos_next = Vec2::new(i_next_prop.cos() / aspect, i_next_prop.sin()) * 0.9;
 
-        let q = gets.get(&i).cloned().unwrap_or(0.);
+        let q = gets.as_ref().map(|x| x.get(&i).cloned()).flatten().unwrap_or(0.);
         let (s, v) = player.sv(q);
         let (h, s, v) = (height, s, v);
         draw.polygon().points([pos, pos_next, Vec2::ZERO]).hsv(h, s, v);

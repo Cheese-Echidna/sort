@@ -4,15 +4,17 @@ use crate::player::SortPlayer;
 use egui::{ComboBox, Window};
 pub use list::*;
 use nannou::prelude::*;
+use nannou::winit::event::VirtualKeyCode;
 use nannou_egui::egui::Slider;
 use nannou_egui::{self, egui, Egui};
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
+use crate::methods::{RenderMethod, SortMethod};
 
 mod algorithms;
 mod list;
 mod player;
 mod renderers;
+mod methods;
 
 fn main() {
     nannou::app(model).fullscreen().update(update).run();
@@ -22,7 +24,7 @@ struct Model {
     _window: window::Id,
     player: SortPlayer,
     egui: Egui,
-    selected: SortMethod,
+    sorter: SortMethod,
     length_log2: usize,
     renderer: RenderMethod,
     last_play: Instant
@@ -44,7 +46,7 @@ fn model(app: &App) -> Model {
         _window: window_id,
         player: SortPlayer::new(2_usize.pow(8), quicksort::sort, 50),
         egui,
-        selected: SortMethod::Quick,
+        sorter: SortMethod::Quick,
         length_log2: 8,
         renderer: RenderMethod::Classic,
         last_play: Instant::now(),
@@ -53,11 +55,37 @@ fn model(app: &App) -> Model {
 
 fn event(_app: &App, model: &mut Model, event: WindowEvent) {
     if let KeyPressed(key) = event {
+        match key {
+            VirtualKeyCode::Up => {
+                model.length_log2 += 1;
+                resort!(model);
+            }
+            VirtualKeyCode::Down => {
+                model.length_log2 -= 1;
+                resort!(model);
+            }
+            VirtualKeyCode::Right => {model.player.playback_rate *= 2}
+            VirtualKeyCode::Left => {model.player.playback_rate /= 2}
+            VirtualKeyCode::Space => {model.player.reset_play()}
+            _ => {}
+        }
+
         let key = key as u32;
         if key < 10 {
             RenderMethod::iter()
                 .nth(key as usize)
                 .map(|x| model.renderer = x);
+        }
+        else if key > 36 && key < 61 {
+            let f_key = key - 37;
+            SortMethod::iter()
+                .nth(f_key as usize)
+                .map(|x| {
+                    if x != model.sorter {
+                        model.sorter = x;
+                        resort!(model);
+                    }
+                });
         }
     }
 }
@@ -67,10 +95,10 @@ fn update(_app: &App, model: &mut Model, update: Update) {
 
     let since_last = model.last_play.elapsed();
     if since_last.as_secs_f64() < 1.0 / model.player.playback_rate as f64 {
-        println!("Since last play = {:?}", since_last);
+        // println!("Since last play = {:?}", since_last);
         return
     } else {
-        println!("Played");
+        // println!("Played");
     }
 
     let raw_updates = model.player.playback_rate as f64 * update.since_last.as_secs_f64();
@@ -87,24 +115,20 @@ fn gui(_app: &App, model: &mut Model, update: Update) {
 
     Window::new("Settings").show(egui.ctx(), |ui| {
         ComboBox::from_label("Renderer")
-            .selected_text(format!("{:?}", model.renderer))
+            .selected_text(format!("{}", model.renderer))
             .show_ui(ui, |ui| {
                 for option in RenderMethod::iter() {
-                    ui.selectable_value(&mut model.renderer, option, format!("{:?}", option));
+                    ui.selectable_value(&mut model.renderer, option, format!("{option}"));
                 }
             });
         ComboBox::from_label("Algorithm")
-            .selected_text(format!("{:?}", model.selected))
+            .selected_text(format!("{}", model.sorter))
             .show_ui(ui, |ui| {
                 for option in SortMethod::iter() {
                     let response =
-                        ui.selectable_value(&mut model.selected, option, format!("{:?}", option));
+                        ui.selectable_value(&mut model.sorter, option, format!("{}", option));
                     if response.changed() {
-                        model.player = SortPlayer::new(
-                            2_usize.pow(model.length_log2 as u32),
-                            model.selected.func(),
-                            model.player.playback_rate
-                        );
+                        resort!(model);
                     }
                 }
             });
@@ -112,58 +136,12 @@ fn gui(_app: &App, model: &mut Model, update: Update) {
         ui.add(Slider::new(&mut model.player.playback_rate, 1..=10000).text("Playback rate (ops/secs)"));
         let res = ui.add(Slider::new(&mut model.length_log2, 1..=16).text("Length (log2)"));
         if res.changed() {
-            model.player =
-                SortPlayer::new(2_usize.pow(model.length_log2 as u32), model.selected.func(), model.player.playback_rate);
+            resort!(model);
         }
         if ui.button("Replay").clicked() {
             model.player.reset_play();
         }
     });
-}
-
-#[derive(Debug, PartialEq, Copy, Clone, EnumIter)]
-enum SortMethod {
-    Quick,
-    Merge,
-    Bubble,
-    Selection,
-    Radix,
-    Bucket,
-}
-
-impl SortMethod {
-    fn func(&self) -> fn(&mut List) {
-        match self {
-            SortMethod::Quick => quicksort::sort,
-            SortMethod::Merge => mergesort::sort,
-            SortMethod::Bubble => bubble::sort,
-            SortMethod::Selection => selection::sort,
-            SortMethod::Radix => radix::sort,
-            SortMethod::Bucket => bucket::sort,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Copy, Clone, EnumIter)]
-enum RenderMethod {
-    Classic,
-    DisparityDots,
-    ColourCircle,
-    ColourTowers,
-}
-
-impl RenderMethod {
-    fn func(&self) -> fn(player: &SortPlayer, draw: &Draw, aspect: f32) {
-        match self {
-            RenderMethod::Classic => renderers::classic::draw_state,
-            RenderMethod::DisparityDots => renderers::disparity_dots::draw_state,
-            RenderMethod::ColourCircle => renderers::colour_circle::draw_state,
-            RenderMethod::ColourTowers => renderers::colour_towers::draw_state,
-        }
-    }
-    fn draw(&self, player: &SortPlayer, draw: &Draw, aspect: f32) {
-        self.func()(player, draw, aspect);
-    }
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
