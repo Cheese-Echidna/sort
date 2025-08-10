@@ -1,4 +1,3 @@
-use std::time::Instant;
 use crate::sketch::algorithms::*;
 use crate::sketch::player::SortPlayer;
 use egui::{ComboBox, Window};
@@ -75,7 +74,7 @@ struct Model {
     sorter: SortMethod,
     length_log2: usize,
     renderer: RenderMethod,
-    last_play: Instant
+    last_play: f32
 }
 
 impl Model {
@@ -88,7 +87,7 @@ impl Model {
             sorter: SortMethod::Quick,
             length_log2: 8,
             renderer: RenderMethod::Classic,
-            last_play: Instant::now(),
+            last_play: app.time,
         }
     }
 }
@@ -130,11 +129,11 @@ fn event(_app: &App, model: &mut Model, event: WindowEvent) {
     }
 }
 
-fn update(_app: &App, model: &mut Model, update: Update) {
-    gui(_app, model, update);
+fn update(app: &App, model: &mut Model, update: Update) {
+    gui(app, model, update);
 
-    let since_last = model.last_play.elapsed();
-    if since_last.as_secs_f64() < 1.0 / model.player.playback_rate as f64 {
+    let since_last = app.time - model.last_play;
+    if since_last < 1.0 / model.player.playback_rate as f32 {
         // println!("Since last play = {:?}", since_last);
         return
     } else {
@@ -145,7 +144,7 @@ fn update(_app: &App, model: &mut Model, update: Update) {
     let moves = (raw_updates).ceil() as usize;
 
     model.player.play(moves);
-    model.last_play = Instant::now();
+    model.last_play = app.time;
 }
 
 fn gui(_app: &App, model: &mut Model, update: Update) {
