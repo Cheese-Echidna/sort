@@ -1,4 +1,4 @@
-use crate::*;
+use crate::sketch::*;
 
 pub(crate) fn sort(x: &mut List) {
     let mut buckets = vec![0; x.len()];

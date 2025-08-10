@@ -1,4 +1,4 @@
-use crate::*;
+use crate::sketch::*;
 
 pub(crate) fn sort(x: &mut impl ListPart) {
     if x.len() <= 1 {

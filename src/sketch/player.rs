@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use nannou::rand::prelude::SliceRandom;
 use nannou::rand::thread_rng;
-use crate::list::Operation;
-use crate::List;
+use crate::sketch::list::Operation;
+use crate::sketch::List;
 
 pub struct SortPlayer {
     starting_vec: Vec<usize>,

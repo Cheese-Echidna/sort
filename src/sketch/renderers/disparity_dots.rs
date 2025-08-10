@@ -1,7 +1,7 @@
 use std::f32::consts::TAU;
 use nannou::Draw;
 use nannou::geom::Vec2;
-use crate::player::SortPlayer;
+use crate::sketch::player::SortPlayer;
 
 
 pub fn draw_state(player: &SortPlayer, draw: &Draw, aspect: f32) {

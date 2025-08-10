@@ -1,4 +1,4 @@
-use crate::*;
+use crate::sketch::*;
 
 pub fn sort(ray: &mut impl ListPart) {
     // Base case: if the list is empty or has one element, it's already sorted.

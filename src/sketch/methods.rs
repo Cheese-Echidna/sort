@@ -2,9 +2,9 @@ use std::fmt::Formatter;
 use nannou::Draw;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use crate::algorithms::{bubble, bucket, mergesort, quicksort, radix, selection};
-use crate::{renderers, List};
-use crate::player::SortPlayer;
+use crate::sketch::algorithms::{bubble, bucket, mergesort, quicksort, radix, selection};
+use crate::sketch::{renderers, List};
+use crate::sketch::player::SortPlayer;
 
 #[derive(Debug, PartialEq, Copy, Clone, EnumIter)]
 pub enum SortMethod {

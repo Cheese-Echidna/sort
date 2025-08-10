@@ -1,4 +1,4 @@
-use crate::*;
+use crate::sketch::*;
 
 pub(crate) fn sort(x: &mut List) {
     for bit in 0..(x.len().ilog2() as usize) {

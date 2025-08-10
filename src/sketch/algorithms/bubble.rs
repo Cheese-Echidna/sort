@@ -1,4 +1,4 @@
-use crate::*;
+use crate::sketch::*;
 
 pub fn sort(ray: &mut List) {
     for end in (0..ray.len()).rev() {
