@@ -18,6 +18,7 @@ mod player;
 mod renderers;
 mod methods;
 
+
 pub async fn run_app(width: u32, height: u32) {
     #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
@@ -64,9 +65,6 @@ async fn create_window(app: &App, width: u32, height: u32) {
         .await
         .unwrap();
 }
-
-
-
 
 struct Model {
     player: SortPlayer,
@@ -177,9 +175,12 @@ fn gui(_app: &App, model: &mut Model, update: Update) {
         if res.changed() {
             resort!(model);
         }
-        if ui.button("Replay").clicked() {
+        if ui.button("Start/Restart").clicked() {
             model.player.reset_play();
         }
+        ui.add(Slider::new(&mut model.player.audio.volume, 0.0..=1.0));
+        let v = model.player.audio.volume;
+        model.player.stream.send(move |x| x.volume = v).unwrap();
     });
 }
 

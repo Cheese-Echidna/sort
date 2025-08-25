@@ -1,5 +1,6 @@
 use std::ops::Range;
 use std::slice::Iter;
+use nannou::rand::Rng;
 
 #[derive(Debug, Clone)]
 pub struct List {
@@ -108,3 +109,26 @@ impl ListPart for SliceOfList<'_> {
     }
 }
 
+pub fn shuffle_step_by_step(list: &mut List) {
+    let mut rng = nannou::rand::thread_rng();
+    if list.len() <= 1 {
+        return;
+    }
+    let mut i = list.len() - 1;
+    loop {
+        let j = rng.gen_range(0..=i);
+        if i != j {
+            list.swap(i, j);
+        }
+        if i == 0 {
+            break;
+        }
+        i -= 1;
+    }
+}
+
+pub fn zing(list: &mut List) {
+    for i in 0..list.len() {
+        let _ = list.get(i);
+    }
+}
