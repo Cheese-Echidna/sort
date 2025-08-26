@@ -1,10 +1,10 @@
-use std::fmt::Formatter;
+use crate::sketch::algorithms::{bubble, bucket, mergesort, quicksort, radix, selection};
+use crate::sketch::player::SortPlayer;
+use crate::sketch::{renderers, List, Model};
 use nannou::Draw;
+use std::fmt::Formatter;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use crate::sketch::algorithms::{bubble, bucket, mergesort, quicksort, radix, selection};
-use crate::sketch::{renderers, List};
-use crate::sketch::player::SortPlayer;
 
 #[derive(Debug, PartialEq, Copy, Clone, EnumIter)]
 pub enum SortMethod {
@@ -70,12 +70,24 @@ impl std::fmt::Display for RenderMethod {
 }
 
 #[macro_export]
-macro_rules! resort {
+macro_rules! restart {
     ($x:expr) => {
         $x.player = SortPlayer::new(
             2_usize.pow($x.length_log2 as u32),
             $x.sorter.func(),
-            $x.player.playback_rate
+            $x.player.playback_rate,
+            $x.reshuffle_on_change,
+            $x.player.playback_vec.clone()
         )
     };
 }
+
+// pub fn restart(model: &mut Model) {
+//     model.player = SortPlayer::new(
+//         2_usize.pow(model.length_log2 as u32),
+//         model.sorter.func(),
+//         model.player.playback_rate,
+//         model.reshuffle_on_change,
+//         model.player.playback_vec.clone()
+//     );
+// }

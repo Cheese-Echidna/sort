@@ -6,10 +6,6 @@ edition = "2024"
 [profile.dev]
 opt-level = 3
 
-[profile.release]
-opt-level = "s"
-
-
 [lib]
 crate-type = ["cdylib"]      # Export as a C-compatible dynamic library for wasm-bindgen
 

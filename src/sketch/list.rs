@@ -31,6 +31,10 @@ impl List {
     pub(crate) fn iter(&self) -> Iter<'_, usize> {
         self.internal_vec.iter()
     }
+
+    pub fn is_sorted(&self) -> bool {
+        self.internal_vec.is_sorted()
+    }
 }
 
 impl ListPart for List {
@@ -132,3 +136,9 @@ pub fn zing(list: &mut List) {
         let _ = list.get(i);
     }
 }
+
+// pub fn insert_pause(list: &mut List, ticks: usize) {
+//     for i in 0..ticks {
+//         let _ = list.;
+//     }
+// }

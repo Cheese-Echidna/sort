@@ -1,5 +1,5 @@
 use crate::sketch::algorithms::*;
-use crate::sketch::player::SortPlayer;
+use crate::sketch::player::{Audio, SortPlayer};
 use egui::{ComboBox, Window};
 pub use list::*;
 use nannou::prelude::*;
@@ -10,7 +10,8 @@ use strum::IntoEnumIterator;
 use crate::sketch::methods::{RenderMethod, SortMethod};
 use nannou::wgpu::{Backends, DeviceDescriptor, Limits};
 use std::cell::RefCell;
-use crate::resort;
+
+use crate::restart;
 
 mod algorithms;
 mod list;
@@ -72,7 +73,9 @@ struct Model {
     sorter: SortMethod,
     length_log2: usize,
     renderer: RenderMethod,
-    last_play: f32
+    last_play: f32,
+    audio: Audio,
+    reshuffle_on_change: bool,
 }
 
 impl Model {
@@ -80,12 +83,18 @@ impl Model {
         let egui = Egui::from_window(&app.main_window());
 
         Model {
-            player: SortPlayer::new(2_usize.pow(8), quicksort::sort, 50),
+            player: SortPlayer::new(2_usize.pow(8), quicksort::sort, 50, true, vec![]),
             egui,
             sorter: SortMethod::Quick,
             length_log2: 8,
             renderer: RenderMethod::Classic,
             last_play: app.time,
+            audio: Audio {
+                phase: 0.0,
+                hz: 440.0,
+                volume: 0.2,
+            },
+            reshuffle_on_change: true,
         }
     }
 }
@@ -95,11 +104,11 @@ fn event(_app: &App, model: &mut Model, event: WindowEvent) {
         match key {
             VirtualKeyCode::Up => {
                 model.length_log2 += 1;
-                resort!(model);
+                restart!(model);
             }
             VirtualKeyCode::Down => {
                 model.length_log2 -= 1;
-                resort!(model);
+                restart!(model);
             }
             VirtualKeyCode::Right => {model.player.playback_rate *= 2}
             VirtualKeyCode::Left => {model.player.playback_rate /= 2}
@@ -120,7 +129,7 @@ fn event(_app: &App, model: &mut Model, event: WindowEvent) {
                 .map(|x| {
                     if x != model.sorter {
                         model.sorter = x;
-                        resort!(model);
+                        restart!(model);
                     }
                 });
         }
@@ -165,21 +174,22 @@ fn gui(_app: &App, model: &mut Model, update: Update) {
                     let response =
                         ui.selectable_value(&mut model.sorter, option, format!("{}", option));
                     if response.changed() {
-                        resort!(model);
+                        restart!(model);
                     }
                 }
             });
 
-        ui.add(Slider::new(&mut model.player.playback_rate, 1..=10000).text("Playback rate (ops/secs)"));
-        let res = ui.add(Slider::new(&mut model.length_log2, 1..=16).text("Length (log2)"));
+        ui.add(Slider::new(&mut model.player.playback_rate, 1..=10000).text("Playback rate (ops/secs) ⬅/➡"));
+        let res = ui.add(Slider::new(&mut model.length_log2, 1..=16).text("Length (log2) ⬆/⬇"));
         if res.changed() {
-            resort!(model);
+            restart!(model);
         }
-        if ui.button("Start/Restart").clicked() {
+        if ui.button("restart!").clicked() {
             model.player.reset_play();
         }
-        ui.add(Slider::new(&mut model.player.audio.volume, 0.0..=1.0));
-        let v = model.player.audio.volume;
+        ui.checkbox(&mut model.reshuffle_on_change, "Reshuffle array on algorithm change");
+        ui.add(Slider::new(&mut model.audio.volume, 0.0..=1.0));
+        let v = model.audio.volume;
         model.player.stream.send(move |x| x.volume = v).unwrap();
     });
 }

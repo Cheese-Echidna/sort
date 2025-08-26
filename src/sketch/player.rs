@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::f64::consts::PI;
 use nannou::rand::prelude::SliceRandom;
 use nannou::rand::thread_rng;
 use crate::sketch::list::Operation;
@@ -8,24 +9,38 @@ use nannou_audio::Buffer;
 
 #[derive(Clone, Copy)]
 pub struct Audio {
-    phase: f64,
-    hz: f64,
+    pub(crate) phase: f64,
+    pub(crate) hz: f64,
     pub volume: f64,
 }
 
 fn audio(audio: &mut Audio, buffer: &mut Buffer) {
     let sample_rate = buffer.sample_rate() as f64;
     let volume = audio.volume;
+
     for frame in buffer.frames_mut() {
-        let sine_amp = (2.0 * std::f64::consts::PI * audio.phase).sin();
+        let t = audio.phase % 1.0;
+
+        let triangle = true;
+
+        let sample = if triangle {
+            // Triangle wave
+            4.0 * (t - 0.5).abs() - 1.0
+        } else {
+            // Sine wave
+            (2.0 * std::f64::consts::PI * audio.phase).sin()
+        };
+
         audio.phase += audio.hz / sample_rate;
-        audio.phase %= sample_rate;
+        if audio.phase >= 1.0 {
+            audio.phase -= 1.0;
+        }
+
         for channel in frame {
-            *channel = (sine_amp * volume) as f32;
+            *channel = (sample * volume) as f32;
         }
     }
 }
-
 pub struct SortPlayer {
     starting_vec: Vec<usize>,
     pub(crate) record_of_operations: Vec<Operation>,
@@ -34,23 +49,32 @@ pub struct SortPlayer {
     pub(crate) playback_vec: Vec<usize>,
     pub(crate) playback_rate: usize,
     pub(crate) stream: audio::Stream<Audio>,
-    pub(crate) audio: Audio
 }
 
 impl SortPlayer {
-    pub fn new(length: usize, sort: fn(&mut List), speed: usize) -> Self {
-        let input = starting(length);
+    pub fn new(length: usize, sort: fn(&mut List), speed: usize, shuffle: bool, list: Vec<usize>) -> Self {
+        let length_equal = length == list.len();
+        let input = if length_equal {
+            list
+        } else {
+            starting(length)
+        };
         let mut list = List::new(input.clone(), length);
-        shuffle_step_by_step(&mut list);
-        // insert_pause(&mut list);
-        sort(&mut list);
+
+        if shuffle || !length_equal {
+            shuffle_step_by_step(&mut list);
+        }
+
+        if !list.is_sorted() {
+            sort(&mut list);
+        }
         zing(&mut list);
 
 
         let audio_model = Audio {
             phase: 0.0,
             hz: 440.0,
-            volume: 0.5,
+            volume: 0.2,
         };
 
         let audio_host = audio::Host::new();
@@ -71,9 +95,9 @@ impl SortPlayer {
             current_play_back_point: 0,
             playback_rate: speed,
             stream,
-            audio: audio_model,
         }
     }
+
     fn playback_complete(&self) -> bool {
         self.current_play_back_point == self.record_of_operations.len()
     }
@@ -99,8 +123,6 @@ impl SortPlayer {
         let x = lerp(120.0, 1212.0, v as f64 / self.length as f64);
 
         self.stream.play().unwrap();
-
-        self.audio.hz = x;
 
         self
             .stream
