@@ -1,9 +1,20 @@
 use crate::sketch::*;
 
-pub(crate) fn sort(x: &mut List) {
-    for bit in 0..(x.len().ilog2() as usize) {
-        sort_by_bit(x, bit);
+pub(crate) fn sort(x: &mut List, base: usize) {
+    for n in 0..((x.len() as f64).log(base as f64).ceil() as usize) {
+        sort_by_base_n(x, base, n);
     }
+}
+
+pub  fn sort_by_base_n(x: &mut List, base: usize, n: usize) {
+    let mut buckets: Vec<Vec<usize>> = vec![vec![]; base];
+    let bp = base.pow(n as u32);
+    for i in 0..x.len() {
+        let v = x.get(i);
+        let rem = (v / bp) % base;
+        buckets[rem].push(v)
+    }
+    buckets.into_iter().flatten().enumerate().for_each(|(i, v)| x.set(i, v));
 }
 
 pub fn sort_by_bit(x: &mut List, bit: usize) {

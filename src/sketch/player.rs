@@ -1,11 +1,8 @@
-use std::collections::HashMap;
-use std::f64::consts::PI;
-use nannou::rand::prelude::SliceRandom;
-use nannou::rand::thread_rng;
 use crate::sketch::list::Operation;
 use crate::sketch::{shuffle_step_by_step, zing, List};
 use nannou_audio as audio;
 use nannou_audio::Buffer;
+use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
 pub struct Audio {
@@ -52,12 +49,19 @@ pub struct SortPlayer {
 }
 
 impl SortPlayer {
-    pub fn new(length: usize, sort: fn(&mut List), speed: usize, shuffle: bool, list: Vec<usize>) -> Self {
+    pub fn new(
+        length: usize,
+        sort: fn(&mut List),
+        speed: usize,
+        shuffle: bool,
+        list: Vec<usize>,
+    ) -> Self {
         let length_equal = length == list.len();
-        let input = if length_equal {
+
+        let input = if length_equal && contains_all(&list) {
             list
         } else {
-            starting(length)
+            starting(length) // refresh
         };
         let mut list = List::new(input.clone(), length);
 
@@ -69,7 +73,6 @@ impl SortPlayer {
             sort(&mut list);
         }
         zing(&mut list);
-
 
         let audio_model = Audio {
             phase: 0.0,
@@ -85,7 +88,6 @@ impl SortPlayer {
             .unwrap();
 
         stream.play().unwrap();
-
 
         Self {
             starting_vec: input.clone(),
@@ -110,27 +112,19 @@ impl SortPlayer {
         self.apply_op(next_op);
         self.current_play_back_point += 1;
         let v = match next_op {
-            Operation::Get(i) => {
-                self.playback_vec[i]
-            }
-            Operation::Set(i, v) => {
-                v
-            }
-            Operation::Swap(i, j) => {
-                self.playback_vec[i]
-            }
+            Operation::Get(i) => self.playback_vec[i],
+            Operation::Set(i, v) => v,
+            Operation::Swap(i, j) => self.playback_vec[i],
         };
         let x = lerp(120.0, 1212.0, v as f64 / self.length as f64);
 
         self.stream.play().unwrap();
 
-        self
-            .stream
+        self.stream
             .send(move |audio| {
                 audio.hz = x;
             })
             .unwrap();
-
     }
     pub fn play(&mut self, x: usize) {
         for _ in 0..x {
@@ -155,7 +149,9 @@ impl SortPlayer {
                 1.0 - (j as f32 / (history_dist - 1) as f32)
             };
             if let Operation::Get(a) = self.record_of_operations[i] {
-                map.entry(a).and_modify(|x: &mut f32| *x = x.max(prop)).or_insert(prop);
+                map.entry(a)
+                    .and_modify(|x: &mut f32| *x = x.max(prop))
+                    .or_insert(prop);
             }
         }
         Some(map)
@@ -179,14 +175,17 @@ impl SortPlayer {
 }
 
 pub fn starting(length: usize) -> Vec<usize> {
-    let v = (0..length)
-        .into_iter()
-        .map(|x| x)
-        .collect::<Vec<usize>>();
+    let v = (0..length).into_iter().map(|x| x).collect::<Vec<usize>>();
     // v.shuffle(&mut thread_rng());
     v
 }
 
 pub fn lerp(a: f64, b: f64, t: f64) -> f64 {
     a + (b - a) * t
+}
+
+pub fn contains_all(l: &Vec<usize>) -> bool {
+    let mut v = l.clone();
+    v.sort();
+    v.windows(2).all(|x| x[0] == x[1] - 1)
 }

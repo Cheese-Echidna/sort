@@ -1,6 +1,6 @@
 use crate::sketch::algorithms::{bogo, bubble, bucket, mergesort, quicksort, radix, selection};
 use crate::sketch::player::SortPlayer;
-use crate::sketch::{renderers, List, Model};
+use crate::sketch::{renderers, List};
 use nannou::Draw;
 use std::fmt::Formatter;
 use strum::IntoEnumIterator;
@@ -12,7 +12,9 @@ pub enum SortMethod {
     Merge,
     Bubble,
     Selection,
-    Radix,
+    RadixBase2,
+    RadixBase16,
+    RadixBase10,
     Bucket,
     Bogo,
 }
@@ -24,7 +26,9 @@ impl SortMethod {
             SortMethod::Merge => mergesort::sort,
             SortMethod::Bubble => bubble::sort,
             SortMethod::Selection => selection::sort,
-            SortMethod::Radix => radix::sort,
+            SortMethod::RadixBase2 => |x| radix::sort(x, 2),
+            SortMethod::RadixBase16 => |x| radix::sort(x, 16),
+            SortMethod::RadixBase10 => |x| radix::sort(x, 10),
             SortMethod::Bucket => bucket::sort,
             &SortMethod::Bogo => bogo::sort,
         }

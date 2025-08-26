@@ -185,7 +185,7 @@ fn gui(_app: &App, model: &mut Model, update: Update) {
             restart!(model);
         }
         if ui.button("restart!").clicked() {
-            model.player.reset_play();
+            restart!(model);
         }
         ui.checkbox(&mut model.reshuffle_on_change, "Reshuffle array on algorithm change");
         ui.add(Slider::new(&mut model.audio.volume, 0.0..=1.0));
