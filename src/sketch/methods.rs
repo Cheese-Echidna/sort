@@ -1,4 +1,4 @@
-use crate::sketch::algorithms::{bubble, bucket, mergesort, quicksort, radix, selection};
+use crate::sketch::algorithms::{bogo, bubble, bucket, mergesort, quicksort, radix, selection};
 use crate::sketch::player::SortPlayer;
 use crate::sketch::{renderers, List, Model};
 use nannou::Draw;
@@ -14,6 +14,7 @@ pub enum SortMethod {
     Selection,
     Radix,
     Bucket,
+    Bogo,
 }
 
 impl SortMethod {
@@ -25,6 +26,7 @@ impl SortMethod {
             SortMethod::Selection => selection::sort,
             SortMethod::Radix => radix::sort,
             SortMethod::Bucket => bucket::sort,
+            &SortMethod::Bogo => bogo::sort,
         }
     }
     pub fn index(&self) -> usize {

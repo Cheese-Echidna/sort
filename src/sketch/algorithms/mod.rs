@@ -4,4 +4,4 @@ pub mod quicksort;
 pub mod radix;
 pub mod selection;
 pub mod bucket;
-mod bogo;
+pub mod bogo;

@@ -35,6 +35,15 @@ impl List {
     pub fn is_sorted(&self) -> bool {
         self.internal_vec.is_sorted()
     }
+
+    pub fn is_sorted_visible(&mut self) -> bool {
+        for i in 0..(self.length-1) {
+            if self.get(i) > self.get(i+1) {
+                return false
+            }
+        }
+        true
+    }
 }
 
 impl ListPart for List {
