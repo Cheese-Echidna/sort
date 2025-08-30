@@ -1,38 +1,7 @@
 use crate::sketch::list::Operation;
 use crate::sketch::{shuffle_step_by_step, zing, List};
 use std::collections::HashMap;
-use nannou_audio as audio;
-use nannou_audio::Buffer;
-// use crate::sketch::audio::{start_audio, Audio, Stream};
-
-
-fn audio(audio: &mut Audio, buffer: &mut Buffer) {
-    let sample_rate = buffer.sample_rate() as f64;
-    let volume = audio.volume;
-
-    for frame in buffer.frames_mut() {
-        let t = audio.phase % 1.0;
-
-        let triangle = true;
-
-        let sample = if triangle {
-            // Triangle wave
-            4.0 * (t - 0.5).abs() - 1.0
-        } else {
-            // Sine wave
-            (2.0 * std::f64::consts::PI * audio.phase).sin()
-        };
-
-        audio.phase += audio.hz / sample_rate;
-        if audio.phase >= 1.0 {
-            audio.phase -= 1.0;
-        }
-
-        for channel in frame {
-            *channel = (sample * volume) as f32;
-        }
-    }
-}
+use crate::sketch::audio::{start_audio, AudioModel, AudioHandle};
 pub struct SortPlayer {
     starting_vec: Vec<usize>,
     pub(crate) record_of_operations: Vec<Operation>,
@@ -40,14 +9,7 @@ pub struct SortPlayer {
     current_play_back_point: usize,
     pub(crate) playback_vec: Vec<usize>,
     pub(crate) playback_rate: usize,
-    pub(crate) stream: audio::Stream<Audio>,
-}
-
-#[derive(Clone, Copy)]
-pub struct Audio {
-    pub(crate) phase: f64,
-    pub(crate) hz: f64,
-    pub volume: f64,
+    pub(crate) stream: AudioHandle,
 }
 
 impl SortPlayer {
@@ -76,18 +38,8 @@ impl SortPlayer {
         }
         zing(&mut list);
 
-        let audio_model = Audio {
-            phase: 0.0,
-            hz: 440.0,
-            volume: 0.2,
-        };
-
-        let audio_host = audio::Host::new();
-        let stream = audio_host
-            .new_output_stream(audio_model)
-            .render(audio)
-            .build()
-            .unwrap();
+        let audio_model = AudioModel { phase: 0.0, hz: 440.0, volume: 0.2 };
+        let stream = start_audio(audio_model).expect("failed to start audio");
 
 
         Self {

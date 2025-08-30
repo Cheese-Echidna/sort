@@ -1,5 +1,6 @@
 use crate::sketch::algorithms::*;
-use crate::sketch::player::{Audio, SortPlayer};
+use crate::sketch::player::SortPlayer;
+use crate::sketch::audio::AudioModel;
 use egui::{ComboBox, Window};
 pub use list::*;
 use nannou::prelude::*;
@@ -18,6 +19,7 @@ mod list;
 mod player;
 mod renderers;
 mod methods;
+pub mod audio;
 
 pub async fn run_app(width: u32, height: u32) {
     #[cfg(debug_assertions)]
@@ -73,7 +75,7 @@ struct Model {
     length_log2: usize,
     renderer: RenderMethod,
     last_play: f32,
-    audio: Audio,
+    audio: AudioModel,
     reshuffle_on_change: bool,
 }
 
@@ -88,7 +90,7 @@ impl Model {
             length_log2: 8,
             renderer: RenderMethod::Classic,
             last_play: app.time,
-            audio: Audio {
+            audio: AudioModel {
                 phase: 0.0,
                 hz: 440.0,
                 volume: 0.2,
