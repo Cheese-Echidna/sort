@@ -1,15 +1,10 @@
 use crate::sketch::list::Operation;
 use crate::sketch::{shuffle_step_by_step, zing, List};
+use std::collections::HashMap;
 use nannou_audio as audio;
 use nannou_audio::Buffer;
-use std::collections::HashMap;
+// use crate::sketch::audio::{start_audio, Audio, Stream};
 
-#[derive(Clone, Copy)]
-pub struct Audio {
-    pub(crate) phase: f64,
-    pub(crate) hz: f64,
-    pub volume: f64,
-}
 
 fn audio(audio: &mut Audio, buffer: &mut Buffer) {
     let sample_rate = buffer.sample_rate() as f64;
@@ -46,6 +41,13 @@ pub struct SortPlayer {
     pub(crate) playback_vec: Vec<usize>,
     pub(crate) playback_rate: usize,
     pub(crate) stream: audio::Stream<Audio>,
+}
+
+#[derive(Clone, Copy)]
+pub struct Audio {
+    pub(crate) phase: f64,
+    pub(crate) hz: f64,
+    pub volume: f64,
 }
 
 impl SortPlayer {
@@ -87,7 +89,6 @@ impl SortPlayer {
             .build()
             .unwrap();
 
-        stream.play().unwrap();
 
         Self {
             starting_vec: input.clone(),

@@ -19,7 +19,6 @@ mod player;
 mod renderers;
 mod methods;
 
-
 pub async fn run_app(width: u32, height: u32) {
     #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
