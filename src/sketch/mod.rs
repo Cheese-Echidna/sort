@@ -189,7 +189,7 @@ fn gui(_app: &App, model: &mut Model, update: Update) {
             restart!(model);
         }
         ui.checkbox(&mut model.reshuffle_on_change, "Reshuffle array on algorithm change");
-        ui.add(Slider::new(&mut model.audio.volume, 0.0..=1.0));
+        ui.add(Slider::new(&mut model.audio.volume, 0.0..=1.0).text("Volume"));
         let v = model.audio.volume;
         model.player.stream.send(move |x| x.volume = v).unwrap();
     });
