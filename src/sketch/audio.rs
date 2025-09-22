@@ -12,7 +12,13 @@ pub struct AudioModel {
 
 impl Default for AudioModel {
     fn default() -> Self {
-        Self { phase: 0.0, hz: 440.0, volume: 0.2 }
+        let volume = if cfg!(target_family = "wasm") {
+            0.0
+        } else {
+            0.2
+        };
+
+        Self { phase: 0.0, hz: 440.0, volume }
     }
 }
 
